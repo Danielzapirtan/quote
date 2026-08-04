@@ -1,160 +1,304 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Polymarket Quotations</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: system-ui, sans-serif; background: #f5f5f5; color: #222; padding: 24px; }
-  h1 { font-size: 1.3rem; margin-bottom: 20px; color: #333; }
-  .search-bar { display: flex; gap: 8px; margin-bottom: 24px; }
-  input[type="text"] { flex: 1; padding: 10px 14px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
-  button { padding: 10px 18px; background: #4f46e5; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; }
-  button:hover { background: #4338ca; }
-  #results { display: flex; flex-direction: column; gap: 14px; }
-  .card { background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-  .card h2 { font-size: 1rem; margin-bottom: 10px; line-height: 1.4; }
-  .outcomes { display: flex; flex-wrap: wrap; gap: 8px; }
-  .outcome { display: flex; flex-direction: column; align-items: center; background: #f0f0ff; border-radius: 6px; padding: 8px 14px; min-width: 80px; }
-  .outcome .label { font-size: 0.75rem; color: #555; margin-bottom: 2px; }
-  .outcome .prob { font-size: 1.2rem; font-weight: 700; color: #4f46e5; }
-  .outcome.yes .prob { color: #16a34a; }
-  .outcome.no .prob { color: #dc2626; }
-  .volume { font-size: 0.78rem; color: #888; margin-top: 8px; }
-  .status { color: #888; font-size: 0.95rem; padding: 8px 0; }
-  .error { color: #dc2626; font-size: 0.95rem; }
-  a.link { font-size: 0.8rem; color: #4f46e5; text-decoration: none; display: inline-block; margin-top: 8px; }
-  a.link:hover { text-decoration: underline; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manifold Markets Quotes</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f5f5f5;
+      color: #1a1a1a;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.6rem;
+      margin-bottom: 0.25rem;
+      color: #4f46e5;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      max-width: 700px;
+      margin: 0 auto 1.5rem;
+      align-items: center;
+    }
+
+    .controls input {
+      flex: 1;
+      min-width: 180px;
+      padding: 0.55rem 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .controls input:focus { border-color: #4f46e5; }
+
+    .controls select {
+      padding: 0.55rem 0.6rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      background: #fff;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .controls button {
+      padding: 0.55rem 1.2rem;
+      background: #4f46e5;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    .controls button:hover { background: #4338ca; }
+    .controls button:disabled { background: #a5b4fc; cursor: not-allowed; }
+
+    #status {
+      text-align: center;
+      color: #555;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      min-height: 1.2em;
+    }
+
+    #status.error { color: #dc2626; }
+
+    .results {
+      display: grid;
+      gap: 1rem;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      border-left: 4px solid #4f46e5;
+    }
+
+    .card-question {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.6rem;
+      line-height: 1.4;
+    }
+
+    .card-question a {
+      color: #1a1a1a;
+      text-decoration: none;
+    }
+
+    .card-question a:hover { text-decoration: underline; color: #4f46e5; }
+
+    .card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      font-size: 0.82rem;
+      color: #555;
+      align-items: center;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .badge-prob {
+      background: #ede9fe;
+      color: #5b21b6;
+    }
+
+    .badge-yes  { background: #dcfce7; color: #166534; }
+    .badge-no   { background: #fee2e2; color: #991b1b; }
+    .badge-na   { background: #f1f5f9; color: #475569; }
+
+    .badge-type {
+      background: #f0f9ff;
+      color: #0369a1;
+    }
+
+    .card-creator { color: #888; }
+
+    .empty {
+      text-align: center;
+      color: #888;
+      margin-top: 2rem;
+      font-size: 0.95rem;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #a5b4fc;
+      border-top-color: #4f46e5;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
 </head>
 <body>
-<h1>Polymarket — Read-Only Quotations</h1>
-<div class="search-bar">
-  <input type="text" id="query" placeholder="Search markets (e.g. election, bitcoin, recession...)" />
-  <button onclick="search()">Search</button>
+
+<h1>Manifold Markets Explorer</h1>
+<p class="subtitle">Search prediction markets and browse live probabilities</p>
+
+<div class="controls">
+  <input
+    id="searchInput"
+    type="text"
+    placeholder="Search markets (e.g. AI, election, crypto…)"
+    autocomplete="off"
+  />
+  <select id="sortSelect">
+    <option value="score">Top Scored</option>
+    <option value="newest">Newest</option>
+    <option value="liquidity">Most Liquid</option>
+    <option value="close-date">Closing Soon</option>
+    <option value="last-updated">Recently Updated</option>
+  </select>
+  <button id="searchBtn">Search</button>
 </div>
-<div id="results"></div>
+
+<div id="status"></div>
+<div id="results" class="results"></div>
 
 <script>
-const GAMMA_API = "https://gamma-api.polymarket.com";
+  const API_BASE = 'https://api.manifold.markets/v0';
 
-function fmt(n) {
-  if (n === undefined || n === null || n === "") return "—";
-  const p = parseFloat(n);
-  if (isNaN(p)) return "—";
-  return (p * 100).toFixed(1) + "%";
-}
+  const input   = document.getElementById('searchInput');
+  const sortSel = document.getElementById('sortSelect');
+  const btn     = document.getElementById('searchBtn');
+  const status  = document.getElementById('status');
+  const results = document.getElementById('results');
 
-function fmtVol(n) {
-  if (!n) return "";
-  const v = parseFloat(n);
-  if (isNaN(v)) return "";
-  if (v >= 1_000_000) return `Vol: $${(v/1_000_000).toFixed(1)}M`;
-  if (v >= 1_000) return `Vol: $${(v/1_000).toFixed(0)}K`;
-  return `Vol: $${v.toFixed(0)}`;
-}
-
-function setStatus(msg, isError = false) {
-  const el = document.getElementById("results");
-  el.innerHTML = `<div class="${isError ? "error" : "status"}">${msg}</div>`;
-}
-
-async function search() {
-  const query = document.getElementById("query").value.trim();
-  if (!query) return;
-
-  setStatus("Searching…");
-
-  try {
-    const url = `${GAMMA_API}/markets?limit=20&active=true&closed=false&_c=${encodeURIComponent(query)}`;
+  async function fetchMarkets(query, sort) {
+    const params = new URLSearchParams({ limit: 20, sort });
+    if (query) params.set('term', query);
+    const url = `${API_BASE}/search-markets?${params}`;
     const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
+    if (!res.ok) throw new Error(`API error: ${res.status} ${res.statusText}`);
+    return res.json();
+  }
 
-    const markets = Array.isArray(data) ? data : (data.markets || []);
+  function probBadge(market) {
+    const t = market.outcomeType;
+    if (t === 'BINARY' && typeof market.probability === 'number') {
+      const pct = Math.round(market.probability * 100);
+      const cls = pct >= 60 ? 'badge-yes' : pct <= 40 ? 'badge-no' : 'badge-prob';
+      return `<span class="badge ${cls}">${pct}% YES</span>`;
+    }
+    if (t === 'PSEUDO_NUMERIC' && typeof market.probability === 'number') {
+      return `<span class="badge badge-prob">~${market.probability.toFixed(2)}</span>`;
+    }
+    return '';
+  }
 
-    const filtered = markets.filter(m =>
-      m.question && m.question.toLowerCase().includes(query.toLowerCase())
-    ).slice(0, 15);
+  function typeBadge(outcomeType) {
+    const labels = {
+      BINARY: 'Yes/No',
+      FREE_RESPONSE: 'Free response',
+      MULTIPLE_CHOICE: 'Multiple choice',
+      NUMERIC: 'Numeric',
+      PSEUDO_NUMERIC: 'Numeric',
+      STONK: 'Stonk',
+      BOUNTIED_QUESTION: 'Bounty',
+      POLL: 'Poll',
+    };
+    const label = labels[outcomeType] || outcomeType;
+    return `<span class="badge badge-type">${label}</span>`;
+  }
 
-    if (!filtered.length) {
-      setStatus("No active markets found for that query.");
+  function formatDate(ts) {
+    if (!ts) return '';
+    return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function renderCards(markets) {
+    if (!markets.length) {
+      results.innerHTML = '<p class="empty">No markets found. Try a different search.</p>';
       return;
     }
 
-    render(filtered);
-  } catch (e) {
-    setStatus("Error fetching data. The API may be temporarily unavailable, or CORS may block browser requests. Try again or use a local proxy. (" + e.message + ")", true);
+    results.innerHTML = markets.map(m => {
+      const closeStr = m.closeTime ? `Closes ${formatDate(m.closeTime)}` : '';
+      const creator  = m.creatorName ? `by ${m.creatorName}` : '';
+      const url      = m.url || `https://manifold.markets/market/${m.slug}`;
+
+      return `
+        <div class="card">
+          <div class="card-question">
+            <a href="${url}" target="_blank" rel="noopener noreferrer">${m.question}</a>
+          </div>
+          <div class="card-meta">
+            ${typeBadge(m.outcomeType)}
+            ${probBadge(m)}
+            ${closeStr ? `<span>${closeStr}</span>` : ''}
+            ${creator  ? `<span class="card-creator">${creator}</span>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
   }
-}
 
-function render(markets) {
-  const el = document.getElementById("results");
-  el.innerHTML = "";
+  async function doSearch() {
+    const query = input.value.trim();
+    const sort  = sortSel.value;
 
-  for (const m of markets) {
-    const card = document.createElement("div");
-    card.className = "card";
+    btn.disabled = true;
+    status.className = '';
+    status.innerHTML = '<span class="spinner"></span>Fetching markets…';
+    results.innerHTML = '';
 
-    const title = document.createElement("h2");
-    title.textContent = m.question || "Untitled";
-    card.appendChild(title);
-
-    const outcomesEl = document.createElement("div");
-    outcomesEl.className = "outcomes";
-
-    // outcomes + prices
-    let outcomes = [];
-    try { outcomes = JSON.parse(m.outcomes || "[]"); } catch {}
-    let prices = [];
-    try { prices = JSON.parse(m.outcomePrices || "[]"); } catch {}
-
-    if (outcomes.length) {
-      outcomes.forEach((label, i) => {
-        const div = document.createElement("div");
-        const lc = label.toLowerCase();
-        div.className = "outcome" + (lc === "yes" ? " yes" : lc === "no" ? " no" : "");
-        div.innerHTML = `<span class="label">${label}</span><span class="prob">${fmt(prices[i])}</span>`;
-        outcomesEl.appendChild(div);
-      });
-    } else if (m.outcomePrices) {
-      // binary fallback
-      const p = parseFloat(m.outcomePrices);
-      if (!isNaN(p)) {
-        outcomesEl.innerHTML = `
-          <div class="outcome yes"><span class="label">Yes</span><span class="prob">${(p*100).toFixed(1)}%</span></div>
-          <div class="outcome no"><span class="label">No</span><span class="prob">${((1-p)*100).toFixed(1)}%</span></div>`;
-      }
+    try {
+      const markets = await fetchMarkets(query, sort);
+      status.textContent = `${markets.length} market${markets.length !== 1 ? 's' : ''} found`;
+      renderCards(markets);
+    } catch (err) {
+      status.className = 'error';
+      status.textContent = `Error: ${err.message}`;
+    } finally {
+      btn.disabled = false;
     }
-
-    card.appendChild(outcomesEl);
-
-    if (m.volume) {
-      const vol = document.createElement("div");
-      vol.className = "volume";
-      vol.textContent = fmtVol(m.volume);
-      card.appendChild(vol);
-    }
-
-    if (m.conditionId || m.slug) {
-      const slug = m.slug || m.conditionId;
-      const link = document.createElement("a");
-      link.className = "link";
-      link.href = `https://polymarket.com/event/${slug}`;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      link.textContent = "View on Polymarket ↗";
-      card.appendChild(link);
-    }
-
-    el.appendChild(card);
   }
-}
 
-document.getElementById("query").addEventListener("keydown", e => {
-  if (e.key === "Enter") search();
-});
+  btn.addEventListener('click', doSearch);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+
+  // Load trending on startup
+  doSearch();
 </script>
 </body>
 </html>
