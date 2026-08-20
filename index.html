@@ -216,7 +216,7 @@
   function probBadge(market) {
     const t = market.outcomeType;
     if (t === 'BINARY' && typeof market.probability === 'number') {
-      const pct = Math.round(market.probability * 100);
+      const pct = Math.round(market.probability * 1000) / 10;
       const cls = pct >= 60 ? 'badge-yes' : pct <= 40 ? 'badge-no' : 'badge-prob';
       return `<span class="badge ${cls}">${pct}% YES</span>`;
     }
